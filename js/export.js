@@ -1,7 +1,7 @@
 // Gera um relatório imprimível (window.print → "Salvar como PDF").
 
 import { loadRange } from './storage.js';
-import { rangeFor, formatBR, weekdayName, PERIOD_LABELS, PASSED_LABELS } from './utils.js';
+import { rangeFor, formatBR, weekdayName, addDays, todayISO, PERIOD_LABELS, PASSED_LABELS, MED_LABELS } from './utils.js';
 
 function escapeHtml(s) {
   return (s || '').replace(/[&<>"']/g, (c) => ({
@@ -24,8 +24,24 @@ export function setupExport({ userId, displayName }) {
     const kind = sel.value;
     const { from, to } = rangeFor(kind);
     const days = await loadRange(userId, from, to);
+    const byDate = Object.fromEntries(days.map((d) => [d.date, d]));
     const painDays = days.filter((d) => d.hadHeadache).sort((a, b) => a.date.localeCompare(b.date));
     const totalDays = painDays.length;
+
+    // Aderência ao remédio
+    const today = todayISO();
+    const daysInRange = [];
+    let cursor = from;
+    while (cursor <= to && cursor <= today) {
+      daysInRange.push(cursor);
+      cursor = addDays(cursor, 1);
+    }
+    const dosesTotal = daysInRange.length * 3;
+    const dosesTaken = daysInRange.reduce((sum, ds) => {
+      const d = byDate[ds];
+      return sum + (d && Array.isArray(d.meds) ? d.meds.length : 0);
+    }, 0);
+    const adherencePct = dosesTotal > 0 ? Math.round((dosesTaken / dosesTotal) * 100) : 0;
 
     const startedCount = { acordar: 0, manha: 0, tarde: 0, noite: 0 };
     const passedCount = { fim_manha: 0, tarde: 0, noite: 0, dia_todo: 0 };
@@ -40,9 +56,24 @@ export function setupExport({ userId, displayName }) {
         <td>${escapeHtml(weekdayName(d.date))}</td>
         <td>${(d.startedAt || []).map((k) => escapeHtml(PERIOD_LABELS[k] || k)).join(', ') || '—'}</td>
         <td>${(d.passedAt || []).map((k) => escapeHtml(PASSED_LABELS[k] || k)).join(', ') || '—'}</td>
+        <td>${(d.meds || []).map((k) => escapeHtml(MED_LABELS[k] || k)).join(', ') || '—'}</td>
         <td>${escapeHtml(d.notes || '')}</td>
       </tr>
     `).join('');
+
+    // Linha por dia mostrando aderência completa (todos os dias do período)
+    const medRows = daysInRange.slice().reverse().map((ds) => {
+      const d = byDate[ds] || {};
+      const taken = Array.isArray(d.meds) ? d.meds : [];
+      const cell = (k) => taken.includes(k)
+        ? '<td style="text-align:center;background:#d8f1e3;color:#2d7e57;">✓</td>'
+        : '<td style="text-align:center;color:#c0392b;">✗</td>';
+      return `<tr>
+        <td>${escapeHtml(formatBR(ds))}</td>
+        <td>${escapeHtml(weekdayName(ds))}</td>
+        ${cell('manha')}${cell('tarde')}${cell('noite')}
+      </tr>`;
+    }).join('');
 
     const html = `<!doctype html>
 <html lang="pt-BR"><head>
@@ -94,14 +125,27 @@ export function setupExport({ userId, displayName }) {
       <li>Passou o dia todo com dor: <b>${passedCount.dia_todo}</b></li>
     </ul>
   </div>
+  <div class="box">
+    <h3>Aderência ao remédio</h3>
+    <div class="total">${adherencePct}%</div>
+    <p style="margin:4px 0 0;color:#666;font-size:13px;">${dosesTaken} de ${dosesTotal} doses (8h / 16h / 23h)</p>
+  </div>
 </div>
 
-<h2 style="margin-top: 8px;">Detalhamento dos dias</h2>
+<h2 style="margin-top: 8px;">Dias com dor de cabeça</h2>
 ${totalDays === 0
   ? '<p style="color:#888">Nenhum dia com dor de cabeça registrado neste período.</p>'
   : `<table>
-      <thead><tr><th>Data</th><th>Dia da semana</th><th>Quando sentiu</th><th>Quando passou</th><th>Observações</th></tr></thead>
+      <thead><tr><th>Data</th><th>Dia da semana</th><th>Quando sentiu</th><th>Quando passou</th><th>Remédio</th><th>Observações</th></tr></thead>
       <tbody>${rows}</tbody>
+    </table>`}
+
+<h2 style="margin-top: 24px;">Aderência diária ao remédio</h2>
+${daysInRange.length === 0
+  ? '<p style="color:#888">Sem dias no período.</p>'
+  : `<table>
+      <thead><tr><th>Data</th><th>Dia da semana</th><th>Manhã (8h)</th><th>Tarde (16h)</th><th>Noite (23h)</th></tr></thead>
+      <tbody>${medRows}</tbody>
     </table>`}
 </body></html>`;
 

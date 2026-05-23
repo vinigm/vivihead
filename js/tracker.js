@@ -6,6 +6,7 @@ export function createTracker({ userId, getDate, onSaved }) {
   const hadGroup = document.getElementById('had-headache');
   const startedGroup = document.getElementById('started-at');
   const passedGroup = document.getElementById('passed-at');
+  const medsGroup = document.getElementById('meds');
   const detailsEl = document.getElementById('details');
   const notesEl = document.getElementById('notes');
   const btnSave = document.getElementById('btn-save');
@@ -16,15 +17,20 @@ export function createTracker({ userId, getDate, onSaved }) {
   let original = blankState();
 
   function blankState() {
-    return { hadHeadache: null, startedAt: [], passedAt: [], notes: '' };
+    return { hadHeadache: null, startedAt: [], passedAt: [], meds: [], notes: '' };
+  }
+
+  function sortedJson(arr) {
+    return JSON.stringify([...arr].sort());
   }
 
   function isEqual(a, b) {
     return (
       a.hadHeadache === b.hadHeadache &&
       a.notes === b.notes &&
-      JSON.stringify([...a.startedAt].sort()) === JSON.stringify([...b.startedAt].sort()) &&
-      JSON.stringify([...a.passedAt].sort()) === JSON.stringify([...b.passedAt].sort())
+      sortedJson(a.startedAt) === sortedJson(b.startedAt) &&
+      sortedJson(a.passedAt) === sortedJson(b.passedAt) &&
+      sortedJson(a.meds) === sortedJson(b.meds)
     );
   }
 
@@ -45,13 +51,16 @@ export function createTracker({ userId, getDate, onSaved }) {
     passedGroup.querySelectorAll('.chip').forEach((c) => {
       c.classList.toggle('active', state.passedAt.includes(c.dataset.value));
     });
+    medsGroup.querySelectorAll('.chip').forEach((c) => {
+      c.classList.toggle('active', state.meds.includes(c.dataset.value));
+    });
     notesEl.value = state.notes;
     updateSaveBtn();
   }
 
   function updateSaveBtn() {
     const dirty = !isEqual(state, original);
-    btnSave.disabled = !dirty || state.hadHeadache === null;
+    btnSave.disabled = !dirty;
     status.textContent = dirty ? 'Alterações não salvas' : '';
   }
 
@@ -81,6 +90,7 @@ export function createTracker({ userId, getDate, onSaved }) {
   }
   toggleMultiSelect(startedGroup, 'startedAt');
   toggleMultiSelect(passedGroup, 'passedAt');
+  toggleMultiSelect(medsGroup, 'meds');
 
   notesEl.addEventListener('input', () => {
     state.notes = notesEl.value;
@@ -113,6 +123,7 @@ export function createTracker({ userId, getDate, onSaved }) {
         hadHeadache: data.hadHeadache === true ? true : data.hadHeadache === false ? false : null,
         startedAt: Array.isArray(data.startedAt) ? [...data.startedAt] : [],
         passedAt: Array.isArray(data.passedAt) ? [...data.passedAt] : [],
+        meds: Array.isArray(data.meds) ? [...data.meds] : [],
         notes: data.notes || '',
       };
       original = JSON.parse(JSON.stringify(state));

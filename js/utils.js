@@ -66,3 +66,11 @@ export const PASSED_LABELS = {
   noite: 'À noite',
   dia_todo: 'Passei o dia todo com dor',
 };
+
+export const MED_LABELS = {
+  manha: 'Manhã (8h)',
+  tarde: 'Tarde (16h)',
+  noite: 'Noite (23h)',
+};
+
+export const MED_SLOTS = ['manha', 'tarde', 'noite'];

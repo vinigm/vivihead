@@ -12,6 +12,7 @@ export function createStats({ userId }) {
   const elEvening = document.getElementById('stat-evening');
   const elWaking = document.getElementById('stat-waking');
   const elAllDay = document.getElementById('stat-allday');
+  const elMeds = document.getElementById('stat-meds');
 
   sel.addEventListener('change', render);
 
@@ -33,6 +34,27 @@ export function createStats({ userId }) {
 
     const allDay = painDays.filter((d) => Array.isArray(d.passedAt) && d.passedAt.includes('dia_todo')).length;
     elAllDay.textContent = String(allDay);
+
+    // Aderência ao remédio — só conta dias que já passaram (não inclui hoje
+    // se ainda não chegou na noite). Dia sem registro também conta como 0/3.
+    const today = todayISO();
+    const daysInRange = [];
+    let cursor = from;
+    while (cursor <= to && cursor <= today) {
+      daysInRange.push(cursor);
+      cursor = addDays(cursor, 1);
+    }
+    const dosesTotal = daysInRange.length * 3;
+    const dosesTaken = daysInRange.reduce((sum, ds) => {
+      const d = byDate[ds];
+      return sum + (d && Array.isArray(d.meds) ? d.meds.length : 0);
+    }, 0);
+    if (dosesTotal === 0) {
+      elMeds.textContent = '—';
+    } else {
+      const pct = Math.round((dosesTaken / dosesTotal) * 100);
+      elMeds.textContent = `${dosesTaken}/${dosesTotal} (${pct}%)`;
+    }
 
     // Streak de dias sem dor (a partir de hoje, indo pra trás).
     // "Sem registro hoje" não quebra a streak — usamos o último dia registrado.

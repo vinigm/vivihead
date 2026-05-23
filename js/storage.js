@@ -16,9 +16,10 @@ export async function saveDay(userId, dateStr, data) {
   const payload = {
     userId,
     date: dateStr,
-    hadHeadache: !!data.hadHeadache,
+    hadHeadache: data.hadHeadache === true ? true : data.hadHeadache === false ? false : null,
     startedAt: Array.isArray(data.startedAt) ? data.startedAt : [],
     passedAt: Array.isArray(data.passedAt) ? data.passedAt : [],
+    meds: Array.isArray(data.meds) ? data.meds : [],
     notes: data.notes || '',
     updatedAt: serverTimestamp(),
   };

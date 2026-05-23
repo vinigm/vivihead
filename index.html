@@ -81,8 +81,18 @@
 
           <div class="field">
             <label class="field-label" for="notes">Observações (opcional)</label>
-            <textarea id="notes" rows="2" placeholder="Remédio que tomou, intensidade, gatilho..."></textarea>
+            <textarea id="notes" rows="2" placeholder="Intensidade, gatilho, etc..."></textarea>
           </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <h3 class="card-title">💊 Remédio (8h / 16h / 23h)</h3>
+        <p class="field-hint" style="margin-top:-8px;">Marque cada dose que já tomou hoje</p>
+        <div class="chip-group" id="meds">
+          <button class="chip" data-value="manha">Manhã (8h)</button>
+          <button class="chip" data-value="tarde">Tarde (16h)</button>
+          <button class="chip" data-value="noite">Noite (23h)</button>
         </div>
       </div>
 
@@ -130,6 +140,10 @@
         <div class="stat-card stat-card-wide">
           <div class="stat-label">Dia todo com dor</div>
           <div class="stat-value" id="stat-allday">—</div>
+        </div>
+        <div class="stat-card stat-card-wide">
+          <div class="stat-label">Aderência ao remédio</div>
+          <div class="stat-value" id="stat-meds">—</div>
         </div>
       </div>
     </section>
