@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="pt-BR" class="auth-hidden">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <meta name="theme-color" content="#f7c5c0" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+  <meta name="apple-mobile-web-app-title" content="ViviHead" />
+  <link rel="manifest" href="manifest.webmanifest" />
+  <link rel="apple-touch-icon" href="icons/icon-192.png" />
+  <link rel="icon" href="icons/icon-192.png" />
+  <link rel="stylesheet" href="css/style.css" />
+  <title>ViviHead — Tracker de dor de cabeça</title>
+  <script>
+    // Esconde a UI até o auth-gate resolver, evitando flash.
+    try {
+      if (localStorage.getItem('vh:lastUid')) {
+        document.documentElement.classList.remove('auth-hidden');
+      }
+    } catch (_) {}
+  </script>
+</head>
+<body class="is-loading">
+  <div id="auth-gate" class="auth-gate" hidden>
+    <div class="auth-card">
+      <h1>ViviHead</h1>
+      <p>Acompanhamento de dor de cabeça</p>
+      <button id="btn-login" class="btn btn-primary">Entrar com Google</button>
+      <p id="auth-error" class="auth-error" hidden></p>
+    </div>
+  </div>
+
+  <main class="page" id="page" hidden>
+    <header class="topbar">
+      <div class="topbar-inner">
+        <div class="brand">
+          <span class="brand-dot"></span>
+          <span class="brand-name">ViviHead</span>
+        </div>
+        <nav class="nav-menu" id="nav-menu"></nav>
+        <button id="btn-logout" class="btn-icon" title="Sair" aria-label="Sair">⎋</button>
+      </div>
+    </header>
+
+    <section class="section section-today">
+      <div class="section-header">
+        <h2>Hoje</h2>
+        <input type="date" id="date-picker" class="date-picker" />
+      </div>
+
+      <div class="card">
+        <h3 class="card-title">Você teve dor de cabeça hoje?</h3>
+        <div class="chip-group chip-group-binary" id="had-headache">
+          <button class="chip" data-value="nao">Não</button>
+          <button class="chip" data-value="sim">Sim</button>
+        </div>
+
+        <div class="details" id="details" hidden>
+          <div class="field">
+            <label class="field-label">Quando começou / sentiu?</label>
+            <p class="field-hint">Pode marcar mais de um período</p>
+            <div class="chip-group" id="started-at">
+              <button class="chip" data-value="acordar">Ao acordar</button>
+              <button class="chip" data-value="manha">De manhã</button>
+              <button class="chip" data-value="tarde">À tarde</button>
+              <button class="chip" data-value="noite">À noite</button>
+            </div>
+          </div>
+
+          <div class="field">
+            <label class="field-label">Passou em algum momento do dia?</label>
+            <p class="field-hint">Pode marcar mais de um. Se a dor durou o dia todo, marque "Passou o dia todo com dor".</p>
+            <div class="chip-group" id="passed-at">
+              <button class="chip" data-value="fim_manha">No final da manhã</button>
+              <button class="chip" data-value="tarde">À tarde</button>
+              <button class="chip" data-value="noite">À noite</button>
+              <button class="chip chip-danger" data-value="dia_todo">Passei o dia todo com dor</button>
+            </div>
+          </div>
+
+          <div class="field">
+            <label class="field-label" for="notes">Observações (opcional)</label>
+            <textarea id="notes" rows="2" placeholder="Remédio que tomou, intensidade, gatilho..."></textarea>
+          </div>
+        </div>
+      </div>
+
+      <div class="save-bar">
+        <button id="btn-save" class="btn btn-primary" disabled>Salvar</button>
+        <span id="save-status" class="save-status"></span>
+      </div>
+    </section>
+
+    <section class="section section-stats">
+      <div class="section-header">
+        <h2>Estatísticas</h2>
+        <select id="stats-range" class="select">
+          <option value="month">Este mês</option>
+          <option value="30">Últimos 30 dias</option>
+          <option value="90">Últimos 90 dias</option>
+          <option value="all">Tudo</option>
+        </select>
+      </div>
+      <div class="stats-grid" id="stats-grid">
+        <div class="stat-card">
+          <div class="stat-label">Dias com dor</div>
+          <div class="stat-value" id="stat-total">—</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Dias sem dor (seq.)</div>
+          <div class="stat-value" id="stat-streak">—</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">De manhã</div>
+          <div class="stat-value" id="stat-morning">—</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">À tarde</div>
+          <div class="stat-value" id="stat-afternoon">—</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">À noite</div>
+          <div class="stat-value" id="stat-evening">—</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Ao acordar</div>
+          <div class="stat-value" id="stat-waking">—</div>
+        </div>
+        <div class="stat-card stat-card-wide">
+          <div class="stat-label">Dia todo com dor</div>
+          <div class="stat-value" id="stat-allday">—</div>
+        </div>
+      </div>
+    </section>
+
+    <section class="section section-calendar">
+      <div class="section-header">
+        <h2>Calendário</h2>
+        <div class="cal-nav">
+          <button class="btn-icon" id="cal-prev" aria-label="Mês anterior">‹</button>
+          <span id="cal-label" class="cal-label"></span>
+          <button class="btn-icon" id="cal-next" aria-label="Próximo mês">›</button>
+        </div>
+      </div>
+      <div class="calendar" id="calendar"></div>
+      <div class="legend">
+        <span class="legend-item"><span class="legend-dot legend-pain"></span> Com dor</span>
+        <span class="legend-item"><span class="legend-dot legend-clear"></span> Sem dor</span>
+        <span class="legend-item"><span class="legend-dot legend-empty"></span> Sem registro</span>
+      </div>
+    </section>
+
+    <section class="section section-export">
+      <div class="section-header">
+        <h2>Exportar para a médica</h2>
+      </div>
+      <div class="card">
+        <p>Gera uma página formatada com o resumo do período selecionado, calendário e lista detalhada dos dias com dor. Use o "Salvar como PDF" do navegador.</p>
+        <div class="export-actions">
+          <select id="export-range" class="select">
+            <option value="month">Este mês</option>
+            <option value="30">Últimos 30 dias</option>
+            <option value="90">Últimos 90 dias</option>
+            <option value="all">Tudo</option>
+          </select>
+          <button id="btn-export" class="btn btn-primary">Abrir relatório</button>
+        </div>
+      </div>
+    </section>
+
+    <footer class="footer">
+      <p>Feito com ❤️ para a Vivi</p>
+    </footer>
+  </main>
+
+  <div id="spinner" class="spinner" aria-hidden="true"></div>
+
+  <!-- Firebase v10 (modular CDN) -->
+  <script type="module" src="js/app.js"></script>
+</body>
+</html>
