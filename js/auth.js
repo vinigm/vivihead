@@ -72,15 +72,22 @@ export function setupAuthGate({ onAuthorized, onUnauthorized }) {
   });
 
   // Trata retorno de redirect (fallback de popup bloqueado)
-  getRedirectResult(auth).catch(() => {});
+  getRedirectResult(auth)
+    .then((r) => console.log('[ViviHead] getRedirectResult →', r))
+    .catch((e) => console.error('[ViviHead] getRedirectResult ERROR', e));
+
+  console.log('[ViviHead] setupAuthGate iniciado');
 
   onAuthStateChanged(auth, (user) => {
+    console.log('[ViviHead] onAuthStateChanged →', user);
     if (!user) {
+      console.log('[ViviHead] sem user → mostrando gate');
       showGate();
       onUnauthorized?.();
       return;
     }
     const email = (user.email || '').toLowerCase();
+    console.log('[ViviHead] email =', email, '| autorizado:', AUTHORIZED_EMAILS.includes(email));
     if (!AUTHORIZED_EMAILS.includes(email)) {
       showGate('Email não autorizado: ' + email);
       signOut(auth);
@@ -88,6 +95,7 @@ export function setupAuthGate({ onAuthorized, onUnauthorized }) {
       return;
     }
     try { localStorage.setItem('vh:lastUid', user.uid); } catch (_) {}
+    console.log('[ViviHead] autorizado, chamando hideGate + onAuthorized');
     hideGate();
     onAuthorized?.({ user, userId: userIdForEmail(email) });
   });
