@@ -1,19 +1,17 @@
 // Bootstrap principal — orquestra auth + tracker + calendar + stats + export.
 
-// import { setupAuthGate } from './auth.js';
+import { setupAuthGate } from './auth.js';
 import { createTracker } from './tracker.js';
 import { createCalendar } from './calendar.js';
 import { createStats } from './stats.js';
 import { setupExport } from './export.js';
 import { todayISO, APP_START_DATE } from './utils.js';
 
-// MODO SEM AUTH (temporário) — pra testar o app sem login.
-// Pra reativar auth: descomenta o import acima e troca este bloco pelo setupAuthGate original.
-document.documentElement.classList.remove('auth-hidden');
-document.getElementById('auth-gate').hidden = true;
-document.getElementById('page').hidden = false;
-document.getElementById('btn-logout').style.display = 'none';
-bootstrap({ user: { displayName: 'Vivi' }, userId: 'vivi' });
+setupAuthGate({
+  onAuthorized: ({ user, userId }) => {
+    bootstrap({ user, userId });
+  },
+});
 
 function bootstrap({ user, userId }) {
   // Registra service worker pra PWA.

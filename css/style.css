@@ -38,6 +38,9 @@ html.auth-hidden .page { visibility: hidden; }
 body.is-loading .page { visibility: hidden; }
 body.is-loading #spinner { display: block; }
 
+/* Garante que o atributo HTML `hidden` sempre esconda, mesmo com display:flex */
+[hidden] { display: none !important; }
+
 .spinner {
   display: none;
   position: fixed;
