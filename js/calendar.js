@@ -1,7 +1,7 @@
-// Calendário mensal.
+// Calendário mensal. Suporta múltiplas instâncias via IDs configuráveis.
 
 import { loadRange } from './storage.js';
-import { todayISO, monthRange, parseISO } from './utils.js';
+import { todayISO, monthRange } from './utils.js';
 
 const DOW = ['D', 'S', 'T', 'Q', 'Q', 'S', 'S'];
 const MONTHS = [
@@ -9,11 +9,14 @@ const MONTHS = [
   'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro',
 ];
 
-export function createCalendar({ userId, onDayClick }) {
-  const calEl = document.getElementById('calendar');
-  const labelEl = document.getElementById('cal-label');
-  const btnPrev = document.getElementById('cal-prev');
-  const btnNext = document.getElementById('cal-next');
+// ids = { calendar, label, prev, next }
+// markGaps: destaca dias passados sem registro (útil pro modo retroativo)
+// startDate: limita navegação/edição a datas >= este valor (opcional)
+export function createCalendar({ userId, onDayClick, ids, markGaps = false, startDate = null }) {
+  const calEl = document.getElementById(ids?.calendar || 'calendar');
+  const labelEl = document.getElementById(ids?.label || 'cal-label');
+  const btnPrev = document.getElementById(ids?.prev || 'cal-prev');
+  const btnNext = document.getElementById(ids?.next || 'cal-next');
 
   const now = new Date();
   let viewYear = now.getFullYear();
@@ -29,6 +32,15 @@ export function createCalendar({ userId, onDayClick }) {
     if (viewMonth > 11) { viewMonth = 0; viewYear++; }
     render();
   });
+
+  // Permite trocar o mês exibido (ex: ao escolher uma data no date picker)
+  function showMonthOf(dateStr) {
+    if (!dateStr) return;
+    const [y, m] = dateStr.split('-').map(Number);
+    viewYear = y;
+    viewMonth = m - 1;
+    render();
+  }
 
   async function render() {
     labelEl.textContent = `${MONTHS[viewMonth]} ${viewYear}`;
@@ -63,18 +75,25 @@ export function createCalendar({ userId, onDayClick }) {
       cell.textContent = String(d);
 
       const entry = byDate[ds];
+      const beforeStart = startDate && ds < startDate;
+
       if (entry) {
         if (entry.hadHeadache) cell.classList.add('pain');
         else cell.classList.add('clear');
+      } else if (markGaps && ds <= today && !beforeStart) {
+        // Dia passado sem registro — destaca como "buraco" pra preencher
+        cell.classList.add('gap');
       }
+
       if (ds === today) cell.classList.add('today');
-      if (ds > today) cell.classList.add('future');
-      else {
+      if (ds > today || beforeStart) {
+        cell.classList.add('future');
+      } else {
         cell.addEventListener('click', () => onDayClick?.(ds));
       }
       calEl.appendChild(cell);
     }
   }
 
-  return { render };
+  return { render, showMonthOf };
 }

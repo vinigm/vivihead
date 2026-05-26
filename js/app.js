@@ -30,17 +30,33 @@ function bootstrap({ user, userId }) {
     onSaved: () => {
       stats.render();
       cal.render();
+      miniCal.render();
     },
   });
 
   const stats = createStats({ userId });
+
+  // Ao clicar num dia (em qualquer calendário): carrega no tracker pra editar
+  const goToDay = (ds) => {
+    datePicker.value = ds;
+    tracker.loadForDate(ds);
+    miniCal.showMonthOf(ds);
+    document.querySelector('.section-today').scrollIntoView({ behavior: 'smooth', block: 'start' });
+  };
+
+  // Calendário completo (embaixo) — visão geral
   const cal = createCalendar({
     userId,
-    onDayClick: (ds) => {
-      datePicker.value = ds;
-      tracker.loadForDate(ds);
-      datePicker.scrollIntoView({ behavior: 'smooth', block: 'start' });
-    },
+    onDayClick: goToDay,
+  });
+
+  // Mini-calendário (topo) — fluxo retroativo, destaca dias sem registro
+  const miniCal = createCalendar({
+    userId,
+    onDayClick: goToDay,
+    markGaps: true,
+    startDate: APP_START_DATE,
+    ids: { calendar: 'mini-calendar', label: 'mini-cal-label', prev: 'mini-cal-prev', next: 'mini-cal-next' },
   });
 
   setupExport({
@@ -50,6 +66,7 @@ function bootstrap({ user, userId }) {
 
   datePicker.addEventListener('change', () => {
     tracker.loadForDate(datePicker.value);
+    miniCal.showMonthOf(datePicker.value);
   });
 
   // Init
@@ -57,6 +74,7 @@ function bootstrap({ user, userId }) {
     tracker.loadForDate(datePicker.value),
     stats.render(),
     cal.render(),
+    miniCal.render(),
   ]).finally(() => {
     document.body.classList.remove('is-loading');
   });

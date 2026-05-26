@@ -49,6 +49,21 @@
         <input type="date" id="date-picker" class="date-picker" />
       </div>
 
+      <details class="mini-cal-wrap" id="mini-cal-wrap">
+        <summary>📅 Editar dia anterior <span class="mini-cal-hint">(retroativo)</span></summary>
+        <div class="mini-cal-nav">
+          <button class="btn-icon" id="mini-cal-prev" aria-label="Mês anterior">‹</button>
+          <span id="mini-cal-label" class="cal-label"></span>
+          <button class="btn-icon" id="mini-cal-next" aria-label="Próximo mês">›</button>
+        </div>
+        <div class="calendar calendar-mini" id="mini-calendar"></div>
+        <div class="legend">
+          <span class="legend-item"><span class="legend-dot legend-pain"></span> Com dor</span>
+          <span class="legend-item"><span class="legend-dot legend-clear"></span> Sem dor</span>
+          <span class="legend-item"><span class="legend-dot legend-gap"></span> Falta registrar</span>
+        </div>
+      </details>
+
       <div class="card">
         <h3 class="card-title">Você teve dor de cabeça hoje?</h3>
         <div class="chip-group chip-group-binary" id="had-headache">
