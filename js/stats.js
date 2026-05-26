@@ -59,14 +59,14 @@ export function createStats({ userId }) {
     // Streak de dias sem dor (a partir de hoje, indo pra trás).
     // "Sem registro hoje" não quebra a streak — usamos o último dia registrado.
     let streak = 0;
-    let cursor = todayISO();
-    while (cursor >= APP_START_DATE) {
-      const d = byDate[cursor];
+    let streakCursor = todayISO();
+    while (streakCursor >= APP_START_DATE) {
+      const d = byDate[streakCursor];
       if (d) {
         if (d.hadHeadache) break;
         streak++;
       }
-      cursor = addDays(cursor, -1);
+      streakCursor = addDays(streakCursor, -1);
       // limite duro de 2 anos pra segurança
       if (streak > 730) break;
     }
